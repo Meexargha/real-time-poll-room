@@ -1,4 +1,5 @@
-const API_BASE = "http://localhost:5000/api/polls";
+// Since frontend and backend are served from same server
+const API_BASE = "/api/polls";
 
 // Create unique voter ID once
 if (!localStorage.getItem("voterId")) {
@@ -7,10 +8,12 @@ if (!localStorage.getItem("voterId")) {
 
 const voterId = localStorage.getItem("voterId");
 
+
 // ==========================
 // CREATE POLL PAGE
 // ==========================
 if (document.getElementById("createPoll")) {
+
   const addBtn = document.getElementById("addOption");
   const createBtn = document.getElementById("createPoll");
 
@@ -24,8 +27,8 @@ if (document.getElementById("createPoll")) {
   createBtn.onclick = async () => {
     const question = document.getElementById("question").value.trim();
     const options = [...document.querySelectorAll(".option")]
-      .map((o) => o.value.trim())
-      .filter((o) => o !== "");
+      .map(o => o.value.trim())
+      .filter(o => o !== "");
 
     if (!question || options.length < 2) {
       alert("Please enter a question and at least 2 options.");
@@ -39,7 +42,7 @@ if (document.getElementById("createPoll")) {
       const res = await fetch(API_BASE, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ question, options }),
+        body: JSON.stringify({ question, options })
       });
 
       const data = await res.json();
@@ -51,7 +54,8 @@ if (document.getElementById("createPoll")) {
         return;
       }
 
-      window.location.href = `poll.html?id=${data.data._id}`;
+      window.location.href = `/poll.html?id=${data.data._id}`;
+
     } catch (err) {
       alert("Network error. Please try again.");
       createBtn.disabled = false;
@@ -60,14 +64,16 @@ if (document.getElementById("createPoll")) {
   };
 }
 
+
 // ==========================
 // POLL PAGE
 // ==========================
 if (window.location.pathname.includes("poll.html")) {
+
   const params = new URLSearchParams(window.location.search);
   const pollId = params.get("id");
 
-  const socket = io("http://localhost:5000");
+  const socket = io(); // auto-connect to same host
 
   socket.emit("joinPoll", pollId);
 
@@ -86,6 +92,7 @@ if (window.location.pathname.includes("poll.html")) {
       }
 
       renderPoll(data.data);
+
     } catch {
       container.innerHTML = `<p style="color:red">Failed to load poll.</p>`;
     }
@@ -99,6 +106,7 @@ if (window.location.pathname.includes("poll.html")) {
     container.innerHTML = "";
 
     poll.options.forEach((opt, index) => {
+
       const percent = totalVotes
         ? ((opt.votes / totalVotes) * 100).toFixed(1)
         : 0;
@@ -127,8 +135,8 @@ if (window.location.pathname.includes("poll.html")) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           optionIndex: index,
-          voterId: voterId,
-        }),
+          voterId: voterId
+        })
       });
 
       const data = await res.json();
@@ -140,6 +148,7 @@ if (window.location.pathname.includes("poll.html")) {
 
       hasVoted = true;
       renderPoll(data.data);
+
     } catch {
       alert("Network error.");
     }
