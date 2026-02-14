@@ -4,6 +4,7 @@ const express = require("express");
 const http = require("http");
 const { Server } = require("socket.io");
 const cors = require("cors");
+const path = require("path");
 
 const connectDB = require("./config/db");
 const pollRoutes = require("./routes/pollRoutes");
@@ -28,20 +29,34 @@ app.set("io", io);
 app.use(cors());
 app.use(express.json());
 
-// Routes
+/* =============================
+   Serve Frontend (IMPORTANT)
+============================= */
+
+// Serve static files from client folder
+app.use(express.static(path.join(__dirname, "client")));
+
+// API routes
 app.use("/api/polls", pollRoutes);
 
-// Socket logic
+// For any other route, serve index.html
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "client", "index.html"));
+});
+
+/* =============================
+   Socket Logic
+============================= */
+
 io.on("connection", (socket) => {
-  console.log(" User connected:", socket.id);
+  console.log("User connected:", socket.id);
 
   socket.on("joinPoll", (pollId) => {
     socket.join(pollId);
-    console.log(`User joined room: ${pollId}`);
   });
 
   socket.on("disconnect", () => {
-    console.log(" User disconnected:", socket.id);
+    console.log("User disconnected:", socket.id);
   });
 });
 
@@ -52,5 +67,5 @@ connectDB();
 const PORT = process.env.PORT || 5000;
 
 server.listen(PORT, () => {
-  console.log(` Server running on port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });
